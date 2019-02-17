@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <title>SassMaster</title>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+  <script src="https://code.jquery.com/jquery.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+</head>
+
+<body>
+  <div class="container" id="buttons-container">
+      <div id="preset-buttons">
+          <button class="gif-button" data-person="Halpert">HalpertFace</button>
+          <button class="gif-button" data-person="Whoops">Whoops</button>
+          <button class="gif-button" data-person="Yay">Yay</button>
+          <button class="gif-button" data-person="Shame">Shame!</button>
+          <button class="gif-button" data-person="Next">Thanks, Next</button>
+      </div>
+      <div id="search-container">
+          <input type="text" name="search-text" id="search-text-box">
+          <button id="search-button">Search</button>
+      </div>
+      <div id="added-buttons">
+      </div>
+  </div>
+  
+  <div class="container col-10 d-flex flex-wrap justify-content-around" id="gifs-appear-here">
+  </div>
+
+  <script type="text/javascript">
+    //populate gifs
+    $(document).on("click",".gif-button", function() {
+      var person = $(this).attr("data-person");
+      var queryURL = "https://api.giphy.com/v1/gifs/search?q=" +
+        person + "&api_key=dc6zaTOxFJmzC&limit=10";
+      $.ajax({
+        url: queryURL,
+        method: "GET"
+      }).then(function(response) {
+          var results = response.data;
+          addGifs(results);
+        });
+    });
+
+    //add new search buttons
+    $(document).on("click","#search-button", function() {
+      var person = $("#search-text-box").val();
+      var addedButtons = [];
+      for (var i = 0; i < $("#added-buttons").children().length; i++){
+        addedButtons.push($("#added-buttons").children()[i].innerText);
+      }
+      if (addedButtons.indexOf(person) == -1){
+        var newButton = $("<button>").attr({
+          "data-person":person,
+          "class":"gif-button"
+          }).text(person).appendTo("#added-buttons");
+      }
+      var queryURL = "https://api.giphy.com/v1/gifs/search?q=" +
+        person + "&api_key=dc6zaTOxFJmzC&limit=10";
+      $.ajax({
+        url: queryURL,
+        method: "GET"
+      }).then(function(response) {
+        console.log(response.data);
+          var results = response.data;
+          addGifs(results);
+        });
+    });
+
+    //play/pause gifs
+    $(document).on("click", ".gif", function() {
+      var src = $(this).attr("src");
+      if($(this).hasClass('playing')){
+        //stop
+        $(this).attr('src', src.replace(".gif", "_s.gif"))
+        $(this).removeClass('playing');
+      } 
+      else {
+        //play
+        $(this).addClass('playing');
+        $(this).attr('src', src.replace("_s.gif", ".gif"))
+      }
+    });
+
+    //add gifs function
+    function addGifs(results){
+      for (var i = 0; i < results.length; i++) {
+        var rating = results[i].rating.toString().toUpperCase();
+        var size = (results[i].images.fixed_height.size)/1000;
+        var gifDiv = $("<div>").addClass("card text-center mx-auto");
+        var gifBody = $("<div>").addClass("card-body").appendTo(gifDiv);
+        var gifHeader = $("<h3>").addClass("card-title").text(results[i].title).appendTo(gifBody);
+        var gifDetails = $("<p>").text("Rating: " + rating + " |  Size: " + size + " KB").appendTo(gifBody);
+        var gifImg = $("<img>").attr("src", results[i].images.fixed_height_still.url).addClass("gif").appendTo(gifBody);
+        var downloadButtonForm = $("<form>").attr({
+          "method":"get",
+          "action":results[i].images.fixed_height.url
+        });
+        var downloadButton = $("<button>").text("Download").appendTo(downloadButtonForm);
+        $(gifDiv).append(downloadButtonForm);
+        $("#gifs-appear-here").prepend(gifDiv);
+    }
+}
+
+
+  </script>
+</body>
+
+</html>
